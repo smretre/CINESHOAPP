@@ -1360,13 +1360,88 @@
       alert('Código Pix copiado!');
     }
 
-    // Pesquisa e Filtros
+    // Filtros por Categoria
+    document.querySelectorAll('.category').forEach(cat => {
+      cat.addEventListener('click', () => {
+        document.querySelectorAll('.category').forEach(c => c.classList.remove('active'));
+        cat.classList.add('active');
+
+        const categoria = cat.dataset.cat;
+        document.querySelectorAll('.card').forEach(card => {
+          const cardCat = card.dataset.categoria;
+          if (categoria === 'todos' || cardCat === categoria || (categoria === 'top' && cardCat.includes('top'))) {
+            card.style.display = 'flex';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    });
+    
+    // Pesquisa em Tempo Real e por Categoria
     const searchInput = document.getElementById('searchInput');
-    searchInput?.addEventListener('input', function() {
-      const termo = this.value.toLowerCase();
-      document.querySelectorAll('.card').forEach(card => {
-        const title = card.querySelector('.card-title').textContent.toLowerCase();
-        card.style.display = title.includes(termo) ? 'flex' : 'none';
+    const mensagem = document.getElementById('nada-encontrado');
+
+    function pesquisar() {
+        // Limpa espaços extras, hífens ou traços no final da busca
+        const termo = searchInput.value.toLowerCase().trim().replace(/[-–—\s]+$/, '');
+        const categoriaAtiva = document.querySelector('.category.active')?.dataset.cat || 'todos';
+        const cards = document.querySelectorAll('.card');
+
+        let encontrou = false;
+
+        cards.forEach(card => {
+            const titleElement = card.querySelector('.card-title');
+            const cardCat = card.dataset.categoria || 'todos';
+            
+            if (!titleElement) return;
+
+            const title = titleElement.textContent.toLowerCase();
+
+            // Verifica se o card pertence à categoria selecionada
+            const bateuCategoria = (categoriaAtiva === 'todos' || cardCat === categoriaAtiva || (categoriaAtiva === 'top' && cardCat.includes('top')));
+            // Verifica se o título corresponde ao termo pesquisado
+            const bateuTexto = (termo === '' || title.includes(termo));
+
+            if (bateuCategoria && bateuTexto) {
+                card.style.display = 'flex'; // Mantém o layout de flexbox do card intacto
+                encontrou = true;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        if (mensagem) {
+            mensagem.style.display = encontrou ? 'none' : 'block';
+        }
+    }
+
+    // Pesquisa enquanto digita
+    searchInput?.addEventListener('input', pesquisar);
+
+    // Tecla Enter para rolar suavemente até ao catálogo
+    searchInput?.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            pesquisar();
+
+            const catalogo = document.getElementById('catalogo');
+            if (catalogo) {
+                window.scrollTo({
+                    top: catalogo.offsetTop - 20,
+                    behavior: 'smooth'
+                });
+            }
+            this.blur(); // Fecha o teclado no telemóvel
+        }
+    });
+
+    // Filtros por Categoria (sincronizados com a pesquisa)
+    document.querySelectorAll('.category').forEach(cat => {
+      cat.addEventListener('click', () => {
+        document.querySelectorAll('.category').forEach(c => c.classList.remove('active'));
+        cat.classList.add('active');
+        pesquisar(); // Aplica a pesquisa novamente ao trocar de aba de categoria
       });
     });
 
