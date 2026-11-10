@@ -979,11 +979,22 @@
 
     // Navegação de Abas Inferior
     function switchMainTab(tabName, btnElement) {
+      // Esconde todas as abas normais
       document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active-tab'));
+      // Remove o feed de tela cheia
+      const feedContainer = document.getElementById('tab-feed');
+      if (feedContainer) feedContainer.classList.remove('active-feed');
+
       document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
 
-      document.getElementById('tab-' + tabName).classList.add('active-tab');
-      btnElement.classList.add('active');
+      if (tabName === 'feed') {
+        if (feedContainer) feedContainer.classList.add('active-feed');
+      } else {
+        const targetTab = document.getElementById('tab-' + tabName);
+        if (targetTab) targetTab.classList.add('active-tab');
+      }
+      
+      if (btnElement) btnElement.classList.add('active');
     }
 
     // Toggle Menu
@@ -1022,25 +1033,28 @@
       }
     }
 
-    // Função para renderizar o Feed dinamicamente com base na coluna video_preview
     function renderFeed(data) {
       const feedContainer = document.getElementById('feedContainer');
       if (!feedContainer) return;
       
-      // Filtra apenas os itens que possuem link de vídeo cadastrado na coluna 'video_preview'
       const itensComVideo = data.filter(item => item.video_preview && item.video_preview !== '');
 
       if (itensComVideo.length === 0) {
         feedContainer.innerHTML = `
-          <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--muted); text-align: center; padding: 20px;">
-            Nenhuma prévia em vídeo cadastrada no momento. Adicione links na coluna video_preview da planilha!
+          <div style="display: flex; align-items: center; justify-content: center; height: 100vh; color: var(--muted); text-align: center; padding: 20px;">
+            Nenhuma prévia em vídeo cadastrada no momento.
           </div>`;
         return;
       }
 
-      feedContainer.innerHTML = itensComVideo.map(item => `
-        <div class="feed-item">
-          <video src="${item.video_preview}" controls loop muted playsinline></video>
+      feedContainer.innerHTML = itensComVideo.map((item, index) => `
+        <div class="feed-item" data-index="${index}">
+          <video src="${item.video_preview}" loop playsinline onclick="togglePlay(this)"></video>
+          
+          <button class="btn-sound" onclick="toggleSound(this)">
+            <i class="fa-solid fa-volume-xmark"></i>
+          </button>
+
           <div class="feed-overlay">
             <h3>${item.titulo} - Prévia</h3>
             <p>Gostou da prévia? Adquira a série completa.</p>
@@ -1050,6 +1064,50 @@
           </div>
         </div>
       `).join('');
+
+      // Configura o IntersectionObserver para dar Play/Pause automático ao rolar o feed
+      initFeedObserver();
+    }
+
+    // Função para ligar/desligar o som do vídeo individualmente
+    function toggleSound(btn) {
+      const video = btn.parentElement.querySelector('video');
+      video.muted = !video.muted;
+      
+      const icon = btn.querySelector('i');
+      if (video.muted) {
+        icon.className = "fa-solid fa-volume-xmark";
+      } else {
+        icon.className = "fa-solid fa-volume-high";
+      }
+    }
+
+    // Play/Pause ao tocar no vídeo
+    function togglePlay(video) {
+      if (video.paused) {
+        video.play();
+      } else {
+        video.pause();
+      }
+    }
+
+    // Gerencia o autoplay apenas do vídeo que está visível na tela (estilo TikTok)
+    function initFeedObserver() {
+      const videos = document.querySelectorAll('.feed-item video');
+      
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          const video = entry.target;
+          if (entry.isIntersecting) {
+            video.play().catch(e => console.log("Autoplay bloqueado pelo navegador:", e));
+          } else {
+            video.pause();
+            video.currentTime = 0;
+          }
+        });
+      }, { threshold: 0.6 });
+
+      videos.forEach(video => observer.observe(video));
     }
 
     function renderBanner(data) {
