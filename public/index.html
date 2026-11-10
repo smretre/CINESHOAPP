@@ -1111,51 +1111,73 @@
       initFeedObserver();
     }
 
-    // Ativar/Desativar som do vídeo
+        // Variável global para controlar se o usuário já ativou o som em algum momento
+    let globalAudioEnabled = false;
+
+    // Função para ligar/desligar o som do vídeo individualmente e memorizar a escolha
     function toggleSound(btn) {
       const video = btn.parentElement.querySelector('video');
       video.muted = !video.muted;
       
-      const icon = btn.querySelector('i');
-      if (video.muted) {
-        icon.className = "fa-solid fa-volume-xmark";
-      } else {
-        icon.className = "fa-solid fa-volume-high";
-      }
+      // Atualiza a preferência global (se desmutou, os próximos vídeos virão com som)
+      globalAudioEnabled = !video.muted;
+      
+      // Atualiza o ícone em TODOS os vídeos do feed para sincronizar
+      document.querySelectorAll('.btn-sound').forEach(b => {
+        b.querySelector('i').className = globalAudioEnabled ? "fa-solid fa-volume-high" : "fa-solid fa-volume-xmark";
+      });
+
+      // Aplica o estado de mudo/som em todos os vídeos visíveis ou futuros
+      document.querySelectorAll('.feed-item video').forEach(v => {
+        v.muted = !globalAudioEnabled;
+      });
     }
 
-    // Play/Pause ao tocar
+    // Play/Pause ao tocar no vídeo
     function togglePlay(video) {
       const feedItem = video.closest('.feed-item');
       const iconContainer = feedItem.querySelector('.video-status-icon');
-      const icon = iconContainer.querySelector('i');
+      const icon = iconContainer ? iconContainer.querySelector('i') : null;
 
       if (video.paused) {
         video.play();
-        icon.className = "fa-solid fa-pause"; // Mostra ícone de play brevemente
+        if (icon) icon.className = "fa-solid fa-pause";
       } else {
         video.pause();
-        icon.className = "fa-solid fa-play"; // Mostra ícone de pause
+        if (icon) icon.className = "fa-solid fa-play";
       }
 
-      // Animação de fade-in e fade-out do ícone
-      iconContainer.classList.add('show');
-      clearTimeout(video.iconTimeout);
-      video.iconTimeout = setTimeout(() => {
-        iconContainer.classList.remove('show');
-      }, 800); // Some após 0.8 segundos
+      if (iconContainer) {
+        iconContainer.classList.add('show');
+        clearTimeout(video.iconTimeout);
+        video.iconTimeout = setTimeout(() => {
+          iconContainer.classList.remove('show');
+        }, 800);
+      }
     }
 
-    // Observer para reprodução automática estilo TikTok ao rolar
+    // Observer para reprodução automática estilo TikTok ao rolar (respeitando a escolha de som)
     function initFeedObserver() {
       const videos = document.querySelectorAll('.feed-item video');
       
       const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           const video = entry.target;
+          const btnSound = video.parentElement.querySelector('.btn-sound i');
+
           if (entry.isIntersecting) {
-            video.muted = true; // Mantém mudo no início devido às restrições dos navegadores
-            video.play().catch(e => console.log("Autoplay bloqueado:", e));
+            // Aplica a preferência global de áudio do usuário
+            video.muted = !globalAudioEnabled;
+            if (btnSound) {
+              btnSound.className = globalAudioEnabled ? "fa-solid fa-volume-high" : "fa-solid fa-volume-xmark";
+            }
+
+            video.play().catch(e => {
+              console.log("Autoplay bloqueado, forçando mudo para reproduzir:", e);
+              video.muted = true;
+              if (btnSound) btnSound.className = "fa-solid fa-volume-xmark";
+              video.play();
+            });
           } else {
             video.pause();
             video.currentTime = 0;
