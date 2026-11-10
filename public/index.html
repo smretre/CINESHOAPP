@@ -480,7 +480,7 @@
       margin-bottom: 8px;
     }
 
-        /* FEED DE PRÉVIAS (Tela Cheia Estilo TikTok/Reels) */
+    /* FEED DE PRÉVIAS (Tela Cheia Real Estilo TikTok/Reels) */
     .feed-container {
       position: fixed;
       top: 0;
@@ -491,8 +491,8 @@
       background: #000;
       overflow-y: scroll;
       scroll-snap-type: y mandatory;
-      z-index: 1000; /* Fica por cima de tudo na aba do feed */
-      display: none; /* Controlado via JS */
+      z-index: 9980; /* Cobre a tela inteira, exceto a barra de nav */
+      display: none; 
     }
 
     .feed-container.active-feed {
@@ -515,23 +515,23 @@
     .feed-item video {
       width: 100%;
       height: 100%;
-      object-fit: cover; /* Preenche a tela inteira sem distorcer */
+      object-fit: cover; /* Preenche a tela toda sem distorção */
     }
 
     .feed-overlay {
       position: absolute;
-      bottom: 80px; /* Acima da barra de navegação inferior */
+      bottom: 80px; /* Alinhado logo acima da barra inferior */
       left: 16px;
       right: 16px;
       z-index: 10;
-      background: rgba(11, 15, 20, 0.75);
+      background: rgba(11, 15, 20, 0.8);
       padding: 16px;
       border-radius: 16px;
       backdrop-filter: blur(12px);
       border: 1px solid var(--border);
     }
 
-    /* Botão flutuante de Som no Vídeo */
+    /* Botão Flutuante de Som */
     .btn-sound {
       position: absolute;
       top: 20px;
@@ -539,15 +539,16 @@
       background: rgba(0, 0, 0, 0.6);
       border: 1px solid var(--border);
       color: white;
-      width: 40px;
-      height: 40px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       z-index: 20;
-      font-size: 16px;
+      font-size: 18px;
+      backdrop-filter: blur(5px);
     }
 
     /* ESTILO COMBOS */
@@ -591,7 +592,7 @@
       margin-bottom: 15px;
     }
 
-    /* BARRA FLUTUANTE DE NAVEGAÇÃO SUPERIOR/INFERIOR */
+    /* BARRA FLUTUANTE DE NAVEGAÇÃO INFERIOR */
     .nav-bottom-bar {
       position: fixed;
       bottom: 0;
@@ -603,7 +604,7 @@
       display: flex;
       justify-content: space-around;
       align-items: center;
-      z-index: 9990;
+      z-index: 9995; /* Fica acima do feed */
       backdrop-filter: blur(15px);
     }
 
@@ -794,6 +795,11 @@
     </button>
   </nav>
 
+  <!-- TELA DE FEED (Fica fora da container principal para tela cheia total) -->
+  <div id="tab-feed" class="feed-container">
+    <div id="feedContainer" style="width: 100%; height: 100%;"></div>
+  </div>
+
   <div class="container">
     <!-- TOPBAR -->
     <div class="topbar">
@@ -861,24 +867,6 @@
 
       <div class="grid" id="catalogGrid"></div>
       <p id="nada-encontrado" style="display:none; text-align: center; padding: 40px; color: var(--muted);">Nenhum resultado encontrado.</p>
-    </div>
-
-    <!-- TELA 2: FEED PRÉVIAS (Estilo Reels/TikTok) -->
-    <div id="tab-feed" class="tab-content">
-      <h2 class="section-title"><i class="fa-solid fa-circle-play"></i> Prévias em Vídeo</h2>
-      <div class="feed-container" id="feedContainer">
-        <!-- Renderizado dinamicamente via planilha ou mock -->
-        <div class="feed-item">
-          <video src="https://www.w3schools.com/html/mov_bbb.mp4" controls loop muted playsinline></video>
-          <div class="feed-overlay">
-            <h3>Specimen 44 - Prévia</h3>
-            <p>Gostou da prévia? Adquira a série completa individualmente.</p>
-            <button class="buy-btn" onclick="comprarItemIndividual('Specimen 44', '5,00')">
-              <i class="fa-solid fa-cart-shopping"></i> Comprar Série por R$ 5,00
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- TELA 3: COMBOS DE SÉRIES -->
@@ -961,7 +949,7 @@
     // URL do seu Google Sheets (CSV)
     const API_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTGeP0x7xeK7nHej7VxXBaM8OkFocnEjkH04IDrP0dzgoBVENtAtL1zSoQn_Z4sIhcBl0Bx5mIK3y8m/pub?output=csv';
 
-    // LINK DO BOT VIP EXTERNO (Altere com o username do seu Bot VIP de Assinatura)
+    // LINK DO BOT VIP EXTERNO
     const BOT_VIP_URL = "https://t.me/Postemix_bot?start=ofertas";
 
     let globalCatalog = [];
@@ -977,19 +965,26 @@
       }
     }
 
-    // Navegação de Abas Inferior
+    // Navegação de Abas
     function switchMainTab(tabName, btnElement) {
-      // Esconde todas as abas normais
+      // Esconde todas as abas padrão
       document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active-tab'));
-      // Remove o feed de tela cheia
+      
+      // Controla a exibição do feed em tela cheia
       const feedContainer = document.getElementById('tab-feed');
-      if (feedContainer) feedContainer.classList.remove('active-feed');
+      if (feedContainer) {
+        if (tabName === 'feed') {
+          feedContainer.classList.add('active-feed');
+        } else {
+          feedContainer.classList.remove('active-feed');
+          // Pausa os vídeos quando sai do feed
+          document.querySelectorAll('.feed-item video').forEach(v => v.pause());
+        }
+      }
 
       document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
 
-      if (tabName === 'feed') {
-        if (feedContainer) feedContainer.classList.add('active-feed');
-      } else {
+      if (tabName !== 'feed') {
         const targetTab = document.getElementById('tab-' + tabName);
         if (targetTab) targetTab.classList.add('active-tab');
       }
@@ -1003,7 +998,7 @@
       menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
     }
 
-        // Carregar Dados da Planilha e popular tanto o Catálogo quanto o Feed
+    // Carregar Dados da Planilha
     async function loadCatalog() {
       try {
         const response = await fetch(API_URL);
@@ -1015,7 +1010,6 @@
           const valores = linha.split(',');
           let obj = { id: 'item_' + index };
           headers.forEach((header, i) => {
-            // Remove espaços e aspas extras que possam vir da planilha e lida com null/vazios
             let valor = valores[i] ? valores[i].trim().replace(/^"|"$/g, '') : '';
             obj[header] = (valor.toLowerCase() === 'null') ? '' : valor;
           });
@@ -1024,7 +1018,7 @@
 
         renderBanner(globalCatalog);
         renderCatalog(globalCatalog);
-        renderFeed(globalCatalog); // <-- Adicionado para preencher o feed dinamicamente
+        renderFeed(globalCatalog);
         initSwiper();
 
       } catch (error) {
@@ -1065,11 +1059,10 @@
         </div>
       `).join('');
 
-      // Configura o IntersectionObserver para dar Play/Pause automático ao rolar o feed
       initFeedObserver();
     }
 
-    // Função para ligar/desligar o som do vídeo individualmente
+    // Ativar/Desativar som do vídeo
     function toggleSound(btn) {
       const video = btn.parentElement.querySelector('video');
       video.muted = !video.muted;
@@ -1082,7 +1075,7 @@
       }
     }
 
-    // Play/Pause ao tocar no vídeo
+    // Play/Pause ao tocar
     function togglePlay(video) {
       if (video.paused) {
         video.play();
@@ -1091,7 +1084,7 @@
       }
     }
 
-    // Gerencia o autoplay apenas do vídeo que está visível na tela (estilo TikTok)
+    // Observer para reprodução automática estilo TikTok ao rolar
     function initFeedObserver() {
       const videos = document.querySelectorAll('.feed-item video');
       
@@ -1099,7 +1092,8 @@
         entries.forEach(entry => {
           const video = entry.target;
           if (entry.isIntersecting) {
-            video.play().catch(e => console.log("Autoplay bloqueado pelo navegador:", e));
+            video.muted = true; // Mantém mudo no início devido às restrições dos navegadores
+            video.play().catch(e => console.log("Autoplay bloqueado:", e));
           } else {
             video.pause();
             video.currentTime = 0;
@@ -1237,7 +1231,6 @@
     async function abrirCheckoutPix() {
       if (carrinho.length === 0) return;
 
-      // Coleta nativa das informações do usuário do Telegram
       const telegramUser = tg?.initDataUnsafe?.user;
       const userTelegramId = telegramUser?.id || 'ID_NÃO_IDENTIFICADO';
       const userUsername = telegramUser?.username ? `@${telegramUser.username}` : (telegramUser?.first_name || 'Sem Username');
