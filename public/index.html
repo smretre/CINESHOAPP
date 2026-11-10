@@ -33,14 +33,66 @@
       --border: rgba(255, 255, 255, 0.08);
     }
 
+        /* Fundo geral totalmente limpo e escuro */
     body {
-      background: radial-gradient(circle at top right, var(--green-glow), transparent 25%),
-                  radial-gradient(circle at bottom left, rgba(0, 255, 102, 0.08), transparent 30%),
-                  var(--bg);
+      background: var(--bg); /* #0b0f14 */
       color: var(--text);
       overflow-x: hidden;
       padding-bottom: 80px;
     }
+
+    /* O card de destaque ganha aquele brilho verde interno controlado */
+    .hero {
+      width: 100%;
+      border-radius: 24px;
+      overflow: hidden;
+      position: relative;
+      margin-bottom: 25px;
+      background: linear-gradient(135deg, #10161d, #141f1a); /* Um toque de verde escuro discreto */
+      display: flex;
+      align-items: center;
+      padding: 30px;
+      border: 1px solid var(--border);
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      width: 250px;
+      height: 250px;
+      /* O brilho verde fica confinado e suave apenas no canto superior direito do card */
+      background: radial-gradient(circle, rgba(0, 255, 102, 0.15), transparent 70%);
+      top: -50px;
+      right: -50px;
+      pointer-events: none;
+    }
+
+    /* O mesmo brilho controlado para o topo (cabeçalho) */
+    .topbar {
+      position: relative;
+      padding-bottom: 10px;
+    }
+    
+    .topbar::after {
+      content: '';
+      position: absolute;
+      top: -20px;
+      right: 0;
+      width: 180px;
+      height: 100px;
+      background: radial-gradient(circle, rgba(0, 255, 102, 0.12), transparent 70%);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /*body {
+      background: radial-gradient(circle at 10% 10%, rgba(0, 255, 102, 0.08), transparent 40%),
+                  radial-gradient(circle at 90% 90%, rgba(0, 255, 102, 0.05), transparent 40%),
+                  var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      padding-bottom: 80px;
+    }*/
 
     .container {
       width: 100%;
@@ -57,13 +109,13 @@
       display: block;
     }
 
-    .topbar {
+    /*.topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 20px;
       gap: 15px;
-    }
+    }*/
 
     .menu-wrapper {
       position: relative;
@@ -172,7 +224,7 @@
       box-shadow: 0 0 15px var(--green-glow);
     }
 
-    .hero {
+    /*.hero {
       width: 100%;
       border-radius: 24px;
       overflow: hidden;
@@ -183,9 +235,9 @@
       align-items: center;
       padding: 30px;
       border: 1px solid var(--border);
-    }
+    }*/
 
-    .hero::before {
+    /*.hero::before {
       content: '';
       position: absolute;
       width: 300px;
@@ -193,7 +245,7 @@
       background: radial-gradient(circle, var(--green-glow), transparent 70%);
       top: -80px;
       right: -80px;
-    }
+    }*/
 
     .hero-content {
       position: relative;
@@ -427,8 +479,6 @@
       width: 100%;
       padding: 5px 0 30px;
       margin-bottom: 15px;
-      background: var(--bg);
-      border-radius: 20px;
     }
 
     .destaqueSwiper .swiper-slide {
@@ -436,7 +486,6 @@
       height: 320px;
       border-radius: 18px;
       overflow: hidden;
-      background: var(--card);
       border: 1px solid var(--border);
     }
 
