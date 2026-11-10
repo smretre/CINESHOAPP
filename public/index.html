@@ -971,7 +971,7 @@
       menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
     }
 
-    // Carregar dados do Google Sheets
+        // Carregar Dados da Planilha e popular tanto o Catálogo quanto o Feed
     async function loadCatalog() {
       try {
         const response = await fetch(API_URL);
@@ -983,13 +983,16 @@
           const valores = linha.split(',');
           let obj = { id: 'item_' + index };
           headers.forEach((header, i) => {
-            obj[header] = valores[i] ? valores[i].trim() : '';
+            // Remove espaços e aspas extras que possam vir da planilha e lida com null/vazios
+            let valor = valores[i] ? valores[i].trim().replace(/^"|"$/g, '') : '';
+            obj[header] = (valor.toLowerCase() === 'null') ? '' : valor;
           });
           return obj;
         }).filter(item => item.titulo);
 
         renderBanner(globalCatalog);
         renderCatalog(globalCatalog);
+        renderFeed(globalCatalog); // <-- Adicionado para preencher o feed dinamicamente
         initSwiper();
 
       } catch (error) {
@@ -998,8 +1001,39 @@
       }
     }
 
+    // Função para renderizar o Feed dinamicamente com base na coluna video_preview
+    function renderFeed(data) {
+      const feedContainer = document.getElementById('feedContainer');
+      if (!feedContainer) return;
+      
+      // Filtra apenas os itens que possuem link de vídeo cadastrado na coluna 'video_preview'
+      const itensComVideo = data.filter(item => item.video_preview && item.video_preview !== '');
+
+      if (itensComVideo.length === 0) {
+        feedContainer.innerHTML = `
+          <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--muted); text-align: center; padding: 20px;">
+            Nenhuma prévia em vídeo cadastrada no momento. Adicione links na coluna video_preview da planilha!
+          </div>`;
+        return;
+      }
+
+      feedContainer.innerHTML = itensComVideo.map(item => `
+        <div class="feed-item">
+          <video src="${item.video_preview}" controls loop muted playsinline></video>
+          <div class="feed-overlay">
+            <h3>${item.titulo} - Prévia</h3>
+            <p>Gostou da prévia? Adquira a série completa.</p>
+            <button class="buy-btn" onclick="comprarItemIndividual('${item.titulo.replace(/'/g, "\\'")}', '${item.preco || '5,00'}')">
+              <i class="fa-solid fa-cart-shopping"></i> Comprar por R$ ${item.preco || '5,00'}
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
     function renderBanner(data) {
       const wrapper = document.getElementById("bannerWrapper");
+      if (!wrapper) return;
       wrapper.innerHTML = data.slice(0, 10).map((item) => `
         <div class="swiper-slide">
           <div class="banner-card">
@@ -1018,6 +1052,7 @@
 
     function renderCatalog(data) {
       const catalogGrid = document.getElementById('catalogGrid');
+      if (!catalogGrid) return;
       catalogGrid.innerHTML = '';
 
       data.forEach((item) => {
@@ -1042,7 +1077,8 @@
         catalogGrid.innerHTML += card;
       });
 
-      document.getElementById('loading').style.display = 'none';
+      const loadingEl = document.getElementById('loading');
+      if (loadingEl) loadingEl.style.display = 'none';
     }
 
     function initSwiper() {
